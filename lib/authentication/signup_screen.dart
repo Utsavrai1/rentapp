@@ -1,13 +1,15 @@
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:rentapp/authentication/auth_bloc.dart';
 import 'package:rentapp/authentication/login_screen.dart';
-import 'package:rentapp/authentication/password_screen.dart';
+import 'package:rentapp/authentication/otp_screen.dart';
 
 class SignUpScreen extends StatelessWidget {
   SignUpScreen({super.key});
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-  final ValueNotifier<bool> isLoading = ValueNotifier<bool>(false);
   final TextEditingController emailController = TextEditingController();
   final TextEditingController nameController = TextEditingController();
 
@@ -118,59 +120,98 @@ class SignUpScreen extends StatelessWidget {
                           const SizedBox(
                             height: 30,
                           ),
-                          ValueListenableBuilder(
-                            valueListenable: isLoading,
-                            builder: (_, value, __) {
-                              return value
-                                  ? Center(
-                                      child: CircularProgressIndicator(
-                                        color: Colors.deepPurple.shade400,
-                                      ),
-                                    )
-                                  : Container(
-                                      margin: const EdgeInsets.only(
-                                          right: 40, left: 40),
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(colors: [
-                                          Colors.deepPurple.shade400,
-                                          Colors.deepPurple.shade400
-                                        ]),
-                                        borderRadius: const BorderRadius.all(
-                                          Radius.circular(10),
+                          Container(
+                            margin: const EdgeInsets.only(right: 40, left: 40),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(colors: [
+                                Colors.deepPurple.shade400,
+                                Colors.deepPurple.shade400
+                              ]),
+                              borderRadius: const BorderRadius.all(
+                                Radius.circular(10),
+                              ),
+                            ),
+                            width: 400,
+                            child: TextButton.icon(
+                              style: TextButton.styleFrom(
+                                textStyle: const TextStyle(
+                                    fontSize: 20, fontWeight: FontWeight.bold),
+                              ),
+                              onPressed: () {
+                                if (formKey.currentState!.validate()) {
+                                  context.read<AuthBloc>().add(
+                                        SendingEmailEvent(
+                                          email: emailController.text,
                                         ),
-                                      ),
-                                      width: 400,
-                                      child: TextButton.icon(
-                                        style: TextButton.styleFrom(
-                                          textStyle: const TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        onPressed: () {
-                                          if (formKey.currentState!
-                                              .validate()) {
+                                      );
+                                  showDialog(
+                                    context: context,
+                                    builder: (_) {
+                                      return BlocConsumer<AuthBloc, AuthState>(
+                                        listener: (context, state) async {
+                                          if (state is SendMailSuccessState) {
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                builder: (context) =>
-                                                    PasswordScreen(),
+                                                builder: (context) => OtpScreen(
+                                                  emailId: emailController.text,
+                                                  name: nameController.text,
+                                                ),
                                               ),
                                             );
                                           }
                                         },
-                                        icon: const Icon(
-                                          Icons.navigate_next,
-                                          color: Colors.white,
-                                        ),
-                                        label: const Text(
-                                          "Next",
-                                          style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 18),
-                                        ),
-                                      ),
-                                    );
-                            },
+                                        builder: (context, state) {
+                                          if (state is SendMailSuccessState) {
+                                            return AlertDialog(
+                                              title: const Text('Success!'),
+                                              content: const Text(
+                                                  'Otp Sent to Your Email'),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      context.pop(),
+                                                  child: const Text('Great!'),
+                                                ),
+                                              ],
+                                            );
+                                          } else if (state
+                                              is SendMailFailState) {
+                                            return AlertDialog(
+                                              title: const Text('Failure'),
+                                              content: Text(state.error),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      context.pop(),
+                                                  child: const Text('Okay'),
+                                                ),
+                                              ],
+                                            );
+                                          } else if (state is SendMailState) {
+                                            return const Center(
+                                              child:
+                                                  CircularProgressIndicator(),
+                                            );
+                                          } else {
+                                            return Container();
+                                          }
+                                        },
+                                      );
+                                    },
+                                  );
+                                }
+                              },
+                              icon: const Icon(
+                                Icons.navigate_next,
+                                color: Colors.white,
+                              ),
+                              label: const Text(
+                                "Next",
+                                style: TextStyle(
+                                    color: Colors.white, fontSize: 18),
+                              ),
+                            ),
                           ),
                           const SizedBox(
                             height: 20,

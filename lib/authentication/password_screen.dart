@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:rentapp/authentication/auth_bloc.dart';
 
 class PasswordScreen extends StatelessWidget {
-  PasswordScreen({super.key});
+  final String emailId;
+  final String name;
+
+  PasswordScreen({super.key, required this.emailId, required this.name});
 
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final ValueNotifier<bool> passwordVisible = ValueNotifier<bool>(false);
-  final ValueNotifier<bool> rePasswordVisible = ValueNotifier<bool>(false);
-  final ValueNotifier<bool> isLoading = ValueNotifier<bool>(false);
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController rePasswordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -106,114 +109,93 @@ class PasswordScreen extends StatelessWidget {
                             },
                           ),
                           const SizedBox(
-                            height: 20,
-                          ),
-                          ValueListenableBuilder(
-                            valueListenable: rePasswordVisible,
-                            builder: (_, value, __) {
-                              return Container(
-                                margin:
-                                    const EdgeInsets.only(right: 20, left: 20),
-                                child: TextFormField(
-                                  controller: rePasswordController,
-                                  obscureText: !value,
-                                  style: const TextStyle(
-                                      color: Colors.black, fontSize: 20),
-                                  decoration: InputDecoration(
-                                    prefixIcon:
-                                        const Icon(Icons.password_rounded),
-                                    suffixIcon: IconButton(
-                                      onPressed: () {
-                                        rePasswordVisible.value =
-                                            !rePasswordVisible.value;
-                                      },
-                                      icon: value
-                                          ? Icon(
-                                              Icons.visibility,
-                                              color: Colors.grey.shade500,
-                                            )
-                                          : Icon(
-                                              Icons.visibility_off,
-                                              color: Colors.grey.shade500,
-                                            ),
-                                    ),
-                                    filled: true,
-                                    fillColor: Colors.grey.shade100,
-                                    contentPadding: const EdgeInsets.only(
-                                        right: 20, left: 20),
-                                    border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                        borderSide: BorderSide.none),
-                                    hintStyle: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.grey.shade700),
-                                    hintText: "Password",
-                                  ),
-                                  validator: (value) {
-                                    if (value != null) {
-                                      if (value.trim().isEmpty) {
-                                        return 'Enter a valid password';
-                                      } else if (value.trim().length < 6) {
-                                        return 'Entered password is not strong';
-                                      } else {
-                                        return null;
-                                      }
-                                    } else {
-                                      return 'Enter a valid password';
-                                    }
-                                  },
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(
                             height: 30,
                           ),
-                          ValueListenableBuilder(
-                            valueListenable: isLoading,
-                            builder: (_, value, __) {
-                              return value
-                                  ? Center(
-                                      child: CircularProgressIndicator(
-                                        color: Colors.deepPurple.shade400,
-                                      ),
-                                    )
-                                  : Container(
-                                      margin: const EdgeInsets.only(
-                                          right: 40, left: 40),
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(colors: [
-                                          Colors.deepPurple.shade400,
-                                          Colors.deepPurple.shade400
-                                        ]),
-                                        borderRadius: const BorderRadius.all(
-                                          Radius.circular(10),
+                          Container(
+                            margin: const EdgeInsets.only(right: 40, left: 40),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(colors: [
+                                Colors.deepPurple.shade400,
+                                Colors.deepPurple.shade400
+                              ]),
+                              borderRadius: const BorderRadius.all(
+                                Radius.circular(10),
+                              ),
+                            ),
+                            width: 400,
+                            child: TextButton.icon(
+                              style: TextButton.styleFrom(
+                                textStyle: const TextStyle(
+                                    fontSize: 20, fontWeight: FontWeight.bold),
+                              ),
+                              onPressed: () {
+                                if (formKey.currentState!.validate()) {
+                                  context.read<AuthBloc>().add(
+                                        AttemptingSignUpEvent(
+                                          email: emailId,
+                                          name: name,
+                                          password: passwordController.text,
                                         ),
-                                      ),
-                                      width: 400,
-                                      child: TextButton.icon(
-                                        style: TextButton.styleFrom(
-                                          textStyle: const TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        onPressed: () {
-                                          if (formKey.currentState!
-                                              .validate()) {}
+                                      );
+                                  showDialog(
+                                    context: context,
+                                    builder: (_) {
+                                      return BlocConsumer<AuthBloc, AuthState>(
+                                        listener: (context, state) async {
+                                          if (state is SignUpSuccessState) {
+                                            context.pushNamed('Home');
+                                          }
                                         },
-                                        icon: const Icon(
-                                          Icons.login_rounded,
-                                          color: Colors.white,
-                                        ),
-                                        label: const Text(
-                                          "SignUp",
-                                          style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 18),
-                                        ),
-                                      ),
-                                    );
-                            },
+                                        builder: (context, state) {
+                                          if (state is SignUpSuccessState) {
+                                            return AlertDialog(
+                                              title: const Text('Success!'),
+                                              content: const Text(
+                                                  'SignUp Successfully'),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      context.pop(),
+                                                  child: const Text('Great!'),
+                                                ),
+                                              ],
+                                            );
+                                          } else if (state is SignUpFailState) {
+                                            return AlertDialog(
+                                              title: const Text('Failure'),
+                                              content: Text(state.error),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      context.pop(),
+                                                  child: const Text('Okay'),
+                                                ),
+                                              ],
+                                            );
+                                          } else if (state is SignUpState) {
+                                            return const Center(
+                                              child:
+                                                  CircularProgressIndicator(),
+                                            );
+                                          } else {
+                                            return Container();
+                                          }
+                                        },
+                                      );
+                                    },
+                                  );
+                                }
+                              },
+                              icon: const Icon(
+                                Icons.login_rounded,
+                                color: Colors.white,
+                              ),
+                              label: const Text(
+                                "SignUp",
+                                style: TextStyle(
+                                    color: Colors.white, fontSize: 18),
+                              ),
+                            ),
                           ),
                           const SizedBox(
                             height: 20,
