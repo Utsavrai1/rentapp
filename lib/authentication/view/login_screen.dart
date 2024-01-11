@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:rentapp/authentication/auth_bloc.dart';
-import 'package:rentapp/authentication/signup_screen.dart';
+import 'package:rentapp/authentication/bloc/auth_bloc.dart';
+import 'package:rentapp/authentication/view/signup_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   LoginScreen({super.key});

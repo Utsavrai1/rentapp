@@ -1,21 +1,60 @@
-import 'package:email_validator/email_validator.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:rentapp/authentication/auth_bloc.dart';
-import 'package:rentapp/authentication/login_screen.dart';
-import 'package:rentapp/authentication/otp_screen.dart';
+import 'package:pinput/pinput.dart';
+import 'package:rentapp/authentication/bloc/auth_bloc.dart';
+import 'package:rentapp/authentication/view/password_screen.dart';
 
-class SignUpScreen extends StatelessWidget {
-  SignUpScreen({super.key});
+class OtpScreen extends StatelessWidget {
+  final String emailId;
+  final String name;
+  OtpScreen({super.key, required this.emailId, required this.name});
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController nameController = TextEditingController();
+  final TextEditingController otpController = TextEditingController();
+
+  final defaultPinTheme = PinTheme(
+    width: 56,
+    height: 56,
+    textStyle: const TextStyle(
+        fontSize: 20,
+        color: Color.fromRGBO(30, 60, 87, 1),
+        fontWeight: FontWeight.w600),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.grey.shade500, width: 3),
+      borderRadius: BorderRadius.circular(10),
+    ),
+  );
+
+  final focusedPinTheme = PinTheme(
+    width: 56,
+    height: 56,
+    textStyle: const TextStyle(
+        fontSize: 20,
+        color: Color.fromRGBO(30, 60, 87, 1),
+        fontWeight: FontWeight.w600),
+    decoration: BoxDecoration(
+      border:
+          Border.all(color: const Color.fromRGBO(114, 178, 238, 1), width: 3),
+      borderRadius: BorderRadius.circular(8),
+    ),
+  );
+
+  final errorPinTheme = PinTheme(
+    width: 56,
+    height: 56,
+    textStyle: const TextStyle(
+        fontSize: 20,
+        color: Color.fromRGBO(30, 60, 87, 1),
+        fontWeight: FontWeight.w600),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.red.shade900, width: 3),
+      borderRadius: BorderRadius.circular(8),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
-    final Size size = MediaQuery.of(context).size;
+    Size size = MediaQuery.of(context).size;
     return Scaffold(
       body: Form(
         key: formKey,
@@ -41,7 +80,7 @@ class SignUpScreen extends StatelessWidget {
                             height: 20,
                           ),
                           Text(
-                            "Sign Up",
+                            "Enter Otp",
                             style: TextStyle(
                                 color: Colors.deepPurple.shade400,
                                 fontSize: 30,
@@ -55,66 +94,27 @@ class SignUpScreen extends StatelessWidget {
                               right: 20,
                               left: 20,
                             ),
-                            child: TextFormField(
-                              controller: nameController,
-                              style: const TextStyle(
-                                  color: Colors.black, fontSize: 18),
-                              decoration: InputDecoration(
-                                  prefixIcon: const Icon(Icons.person),
-                                  filled: true,
-                                  fillColor: Colors.grey.shade100,
-                                  contentPadding: const EdgeInsets.only(
-                                      right: 20, left: 20),
-                                  border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                      borderSide: BorderSide.none),
-                                  hintStyle: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.grey.shade700),
-                                  hintText: "Name"),
+                            child: Pinput(
+                              length: 6,
+                              defaultPinTheme: defaultPinTheme,
+                              focusedPinTheme: focusedPinTheme,
+                              errorPinTheme: errorPinTheme,
                               validator: (value) {
                                 if (value != null) {
-                                  if (value.trim().isEmpty) {
-                                    return 'Enter a name';
+                                  if (value.isEmpty) {
+                                    return 'Enter Otp';
+                                  } else if (value.length != 6) {
+                                    return 'Enter 6 digit otp';
                                   } else {
                                     return null;
                                   }
                                 } else {
-                                  return 'Enter a name';
+                                  return 'Enter Otp';
                                 }
                               },
-                            ),
-                          ),
-                          const SizedBox(
-                            height: 20,
-                          ),
-                          Container(
-                            margin: const EdgeInsets.only(
-                              right: 20,
-                              left: 20,
-                            ),
-                            child: TextFormField(
-                              controller: emailController,
-                              style: const TextStyle(
-                                  color: Colors.black, fontSize: 18),
-                              decoration: InputDecoration(
-                                  prefixIcon:
-                                      const Icon(Icons.alternate_email_rounded),
-                                  filled: true,
-                                  fillColor: Colors.grey.shade100,
-                                  contentPadding: const EdgeInsets.only(
-                                      right: 20, left: 20),
-                                  border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                      borderSide: BorderSide.none),
-                                  hintStyle: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.grey.shade700),
-                                  hintText: "Email-id"),
-                              validator: (email) => email != null &&
-                                      !EmailValidator.validate(email)
-                                  ? 'Enter a valid email'
-                                  : null,
+                              pinputAutovalidateMode:
+                                  PinputAutovalidateMode.onSubmit,
+                              controller: otpController,
                             ),
                           ),
                           const SizedBox(
@@ -138,10 +138,13 @@ class SignUpScreen extends StatelessWidget {
                                     fontSize: 20, fontWeight: FontWeight.bold),
                               ),
                               onPressed: () {
-                                if (formKey.currentState!.validate()) {
+                                if (formKey.currentState!.validate() &&
+                                    otpController.text.isNotEmpty &&
+                                    otpController.text.length == 6) {
                                   context.read<AuthBloc>().add(
-                                        SendingEmailEvent(
-                                          email: emailController.text,
+                                        VerifyingEmailEvent(
+                                          email: emailId,
+                                          otp: otpController.text,
                                         ),
                                       );
                                   showDialog(
@@ -149,24 +152,25 @@ class SignUpScreen extends StatelessWidget {
                                     builder: (_) {
                                       return BlocConsumer<AuthBloc, AuthState>(
                                         listener: (context, state) async {
-                                          if (state is SendMailSuccessState) {
+                                          if (state is VerifyMailSuccessState) {
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                builder: (context) => OtpScreen(
-                                                  emailId: emailController.text,
-                                                  name: nameController.text,
+                                                builder: (context) =>
+                                                    PasswordScreen(
+                                                  emailId: emailId,
+                                                  name: name,
                                                 ),
                                               ),
                                             );
                                           }
                                         },
                                         builder: (context, state) {
-                                          if (state is SendMailSuccessState) {
+                                          if (state is VerifyMailSuccessState) {
                                             return AlertDialog(
                                               title: const Text('Success!'),
                                               content: const Text(
-                                                  'Otp Sent to Your Email'),
+                                                  'Email Verified Successfully'),
                                               actions: [
                                                 TextButton(
                                                   onPressed: () =>
@@ -176,7 +180,7 @@ class SignUpScreen extends StatelessWidget {
                                               ],
                                             );
                                           } else if (state
-                                              is SendMailFailState) {
+                                              is VerifyMailFailState) {
                                             return AlertDialog(
                                               title: const Text('Failure'),
                                               content: Text(state.error),
@@ -188,7 +192,7 @@ class SignUpScreen extends StatelessWidget {
                                                 ),
                                               ],
                                             );
-                                          } else if (state is SendMailState) {
+                                          } else if (state is VerifyMailState) {
                                             return const Center(
                                               child:
                                                   CircularProgressIndicator(),
@@ -210,34 +214,6 @@ class SignUpScreen extends StatelessWidget {
                                 "Next",
                                 style: TextStyle(
                                     color: Colors.white, fontSize: 18),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(
-                            height: 20,
-                          ),
-                          Center(
-                            child: RichText(
-                              text: TextSpan(
-                                text: 'Already have an account?',
-                                style: const TextStyle(
-                                    color: Colors.black, fontSize: 16),
-                                children: <TextSpan>[
-                                  TextSpan(
-                                    text: ' Log in',
-                                    style: const TextStyle(
-                                        color: Colors.deepPurple, fontSize: 16),
-                                    recognizer: TapGestureRecognizer()
-                                      ..onTap = () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => LoginScreen(),
-                                          ),
-                                        );
-                                      },
-                                  )
-                                ],
                               ),
                             ),
                           ),

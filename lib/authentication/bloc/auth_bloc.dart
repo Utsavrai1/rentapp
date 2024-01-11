@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:rentapp/authentication/auth_service.dart';
+import 'package:rentapp/authentication/service/auth_service.dart';
 import 'package:rentapp/localstorage/local_storage.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {

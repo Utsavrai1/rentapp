@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:rentapp/authentication/auth_bloc.dart';
+import 'package:rentapp/authentication/bloc/auth_bloc.dart';
 import 'package:rentapp/model/custom_themes.dart';
 import 'package:rentapp/router/router_config.dart';
 

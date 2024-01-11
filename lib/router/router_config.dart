@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:rentapp/authentication/login_screen.dart';
-import 'package:rentapp/authentication/signup_screen.dart';
-import 'package:rentapp/error/error_screen.dart';
-import 'package:rentapp/home/home_screen.dart';
+import 'package:rentapp/authentication/view/login_screen.dart';
+import 'package:rentapp/authentication/view/signup_screen.dart';
+import 'package:rentapp/error/view/error_screen.dart';
+import 'package:rentapp/home/view/home_screen.dart';
 import 'package:rentapp/localstorage/local_storage.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
